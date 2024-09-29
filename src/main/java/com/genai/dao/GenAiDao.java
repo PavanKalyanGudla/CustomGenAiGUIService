@@ -46,6 +46,15 @@ public class GenAiDao {
 		}
 	}
 	
+	public int updateProfilePic(String userId, byte[] image){
+		try {
+			int update = jdbc.update(Constants.UPLOAD_PROFILE_PIC , image , userId);
+			return update;
+		}catch(Exception e) {
+			return 0;
+		}
+	}
+	
 	public User getUserObject(String email, String password) {
 		User user = jdbc.queryForObject(Constants.GET_USER_OBJECT, new UserRowMapper(),new Object[] {email,password});
 		return user;
