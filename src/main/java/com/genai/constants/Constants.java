@@ -22,6 +22,8 @@ public class Constants {
 	
 	public static final String USER_NOT_EXISTS = "User Not Yet Registered with the Provided MailId";
 	
+	public static final String ACCOUNT_DOESNT_EXISTS = "NOT FOUND, PLEASE DO REGISTER AND SIGNIN";
+	
 	public static final String EMAIL_Registration_SUCCESSFUL_SUBJECT = "Custom Gen Ai User Registration Successful ...";
 	
 	public static final String FORGOT_PASSWORD = "Custom Gen Ai User Forgot Password Request ...";
@@ -34,8 +36,12 @@ public class Constants {
 	
 	public static final String GET_USER_OBJECT = "select * from user where email=? and password=?";
 
+	// Insert
 	public static final String INSERT_USER = "insert into user(userid,firstName,lastName,email,password,dateOfJoin)"
 			+ "values(?,?,?,?,?,?)";
+	
+	//Update
+	public static final String UPLOAD_PROFILE_PIC = "update user set profilePic = ? where userid = ?";
 
 	public static String getUserRegistrationBody(String firstName, String LastName, String userId, String email, String date) {
 	    String PATIENT_REGISTRATION_CONTENT = String.format(
