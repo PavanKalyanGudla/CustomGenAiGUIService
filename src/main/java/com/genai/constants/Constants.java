@@ -26,6 +26,8 @@ public class Constants {
 	
 	public static final String EMAIL_Registration_SUCCESSFUL_SUBJECT = "Custom Gen Ai User Registration Successful ...";
 	
+	public static final String INVALID_PASSWORD = "INVALID PASSWORD";
+	
 	public static final String FORGOT_PASSWORD = "Custom Gen Ai User Forgot Password Request ...";
 	
 	public static final String CHECK_MAIL = "Password will be notified to Registered Email";
@@ -36,9 +38,19 @@ public class Constants {
 	
 	public static final String GET_USER_OBJECT = "select * from user where email=? and password=?";
 
+	public static final String GET_USER_CHAT_TRANSACTION = "select * from chatTransaction where userid=?";
+	
+	public static final String GET_USER_IMAGE_TRANSACTION = "select * from imageTransaction where userid=?";
+	
 	// Insert
 	public static final String INSERT_USER = "insert into user(userid,firstName,lastName,email,password,dateOfJoin)"
 			+ "values(?,?,?,?,?,?)";
+	
+	public static final String INSERT_CHAT_TRANSACTION = "insert into chatTransaction(userid,question,answer,dateOfChat)"
+			+ "values(?,?,?,CURRENT_DATE)";
+	
+	public static final String INSERT_IMAGE_TRANSACTION = "insert into imageTransaction(userid,question,answer,dateOfChat)"
+			+ "values(?,?,?,CURRENT_DATE)";
 	
 	//Update
 	public static final String UPLOAD_PROFILE_PIC = "update user set profilePic = ? where userid = ?";
