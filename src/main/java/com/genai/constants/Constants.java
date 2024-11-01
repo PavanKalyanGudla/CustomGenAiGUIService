@@ -14,6 +14,8 @@ public class Constants {
  	
 	public static final String ERROR = "APPLICATION ERROR";
 	
+	public static final String IMAGE_ANALYSIS = "Explain what do you see in this Image";
+	
 	public static final String USER_REGISTRATION_SUCCESS = "USER REGISTERED SUCCESSFULLY";
 	
 	public static final String USER_REGISTRATION_FAIL = "User Registeration Failed";
@@ -42,6 +44,10 @@ public class Constants {
 	
 	public static final String GET_USER_IMAGE_TRANSACTION = "select * from imageTransaction where userid=?";
 	
+	public static final String GET_IMAGE_ANALYSIS_TRANSACTION = "select * from imageAnalysisTransaction where userid=?";
+	
+	public static final String GET_TRANSLATION_TRANSACTION = "select * from translateTransaction where userid=?";
+	
 	// Insert
 	public static final String INSERT_USER = "insert into user(userid,firstName,lastName,email,password,dateOfJoin)"
 			+ "values(?,?,?,?,?,?)";
@@ -51,6 +57,12 @@ public class Constants {
 	
 	public static final String INSERT_IMAGE_TRANSACTION = "insert into imageTransaction(userid,question,answer,dateOfChat)"
 			+ "values(?,?,?,CURRENT_DATE)";
+	
+	public static final String INSERT_IMAGE_ANALYSIS_TRANSACTION = "insert into imageAnalysisTransaction(userid,question,image,answer,dateOfChat)"
+			+"values(?,?,?,?,CURRENT_DATE)";
+	
+	public static final String INSERT_INTO_TRANSLATION_TRANSACTION = "insert into translateTransaction(userid,sourceText,sourceLang,targetText,targetLang,dateOfChat)"
+			+"values(?,?,?,?,?,CURRENT_DATE)";
 	
 	//Update
 	public static final String UPLOAD_PROFILE_PIC = "update user set profilePic = ? where userid = ?";

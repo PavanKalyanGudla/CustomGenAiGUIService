@@ -22,10 +22,14 @@ import org.springframework.web.multipart.MultipartFile;
 import com.genai.constants.Constants;
 import com.genai.model.ChatGptRequest;
 import com.genai.model.ChatTransaction;
+import com.genai.model.ImageAnalysisTransaction;
 import com.genai.model.ImageTransaction;
 import com.genai.model.ResponseObj;
+import com.genai.model.TranslationTransaction;
 import com.genai.model.User;
 import com.genai.service.GenAiService;
+
+import reactor.core.publisher.Flux;
 
 @RestController
 @CrossOrigin("http://localhost:4200")
@@ -86,6 +90,11 @@ public class GenAiController {
         return ResponseEntity.ok(response);
     }
 	
+	@GetMapping("/stream")
+    public Flux<String> chatWithStream(@RequestParam String message) {
+		return genService.chatWithStream(message);
+    }
+	
 	@GetMapping("/getChatHistory")
 	public Map<String, List<ChatTransaction>> getChatHistory(String email, String password){
 		return genService.getChatHistory(email, password);
@@ -104,4 +113,42 @@ public class GenAiController {
 		return genService.getImageHistory(email, password);
 	}
 	
+	@PostMapping("/imageAnalysis")
+	public String getImageAnalysis(String userId, String prompt, @RequestParam("file") MultipartFile file) {
+		String response = "";
+		try {
+			response = genService.generateImageToText(userId,prompt, file);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return response;
+	}
+	
+	@GetMapping("/getImageAnalysisHistory")
+	public Map<String, List<ImageAnalysisTransaction>> getImageAnalysisHistory(String email, String password) {
+		return genService.getImageAnalysisTransactions(email,password);
+	}
+	
+	@GetMapping("/translate")
+	public String translate(@RequestParam String userId,@RequestParam String text, @RequestParam String sourceLanguage, @RequestParam String targetLanguage) {
+		return genService.translate(text, sourceLanguage, targetLanguage,userId);
+	}
+	
+	@GetMapping("/getUserTranslations")
+	public Map<String, List<TranslationTransaction>> getTranslateTransactions(@RequestParam String userId) {
+		return genService.getTranslationTransaction(userId);
+	}
+	
+	@PostMapping("/resumeAnalyzer")
+    public ResponseEntity<String> analyzeResume(@RequestParam("file") MultipartFile file) {
+        try {
+            String resumeText = genService.extractTextFromFile(file);
+            String analysis = genService.analyzeResume(resumeText);
+            return ResponseEntity.ok(analysis);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to analyze resume");
+        }
+    }
+
 }
