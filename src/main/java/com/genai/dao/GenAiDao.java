@@ -8,11 +8,15 @@ import org.springframework.stereotype.Service;
 
 import com.genai.constants.Constants;
 import com.genai.model.ChatTransaction;
+import com.genai.model.ImageAnalysisTransaction;
 import com.genai.model.ImageTransaction;
+import com.genai.model.TranslationTransaction;
 import com.genai.model.User;
 import com.genai.rowmapper.ChatTransactionRowMapper;
 import com.genai.rowmapper.ImageTransactionRowMapper;
+import com.genai.rowmapper.ImageAnalysisTransactionRowMapper;
 import com.genai.rowmapper.UserRowMapper;
+import com.genai.rowmapper.TranslationTransactionRowMapper;
 
 @Service
 public class GenAiDao {
@@ -101,6 +105,42 @@ public class GenAiDao {
 			e.printStackTrace();
 		}
 		return chatTrans;
+	}
+	
+	public void saveImageAnalysisGptTransaction(ImageAnalysisTransaction t) {
+		try {
+			jdbc.update(Constants.INSERT_IMAGE_ANALYSIS_TRANSACTION, t.getUserid(),t.getQuestion(),t.getImage(),t.getAnswer());
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public List<ImageAnalysisTransaction> getImageAnalysisTransactions(String userId) {
+		List<ImageAnalysisTransaction> trans = null;
+		try {
+			trans = jdbc.query(Constants.GET_IMAGE_ANALYSIS_TRANSACTION, new ImageAnalysisTransactionRowMapper(), new Object[] {userId});
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return trans;
+	}
+	
+	public void saveTranslaterTransaction(TranslationTransaction trans) {
+		try {
+			jdbc.update(Constants.INSERT_INTO_TRANSLATION_TRANSACTION, trans.getUserid(),trans.getQuestion(),trans.getSourceLang(),trans.getAnswer(),trans.getTargetLang());
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public List<TranslationTransaction> getTranslationTransaction(String userId) {
+		List<TranslationTransaction> translationTrans = null;
+		try {
+			translationTrans = jdbc.query(Constants.GET_TRANSLATION_TRANSACTION, new TranslationTransactionRowMapper(), new Object[] {userId});
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return translationTrans;
 	}
 
 }

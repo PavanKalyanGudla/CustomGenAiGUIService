@@ -1,24 +1,34 @@
 package com.genai.service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.groovy.parser.antlr4.util.StringUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
 import org.springframework.ai.openai.OpenAiImageModel;
 import org.springframework.ai.openai.OpenAiImageOptions;
+import org.springframework.ai.openai.api.OpenAiApi.ChatCompletionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -27,7 +37,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -37,9 +50,14 @@ import com.genai.constants.Constants;
 import com.genai.dao.GenAiDao;
 import com.genai.model.ChatGptRequest;
 import com.genai.model.ChatTransaction;
+import com.genai.model.ImageAnalysisTransaction;
 import com.genai.model.ImageTransaction;
 import com.genai.model.ResponseObj;
+import com.genai.model.TranslationTransaction;
 import com.genai.model.User;
+import com.genai.rowmapper.TranslationTransactionRowMapper;
+
+import reactor.core.publisher.Flux;
 
 @Service
 public class GenAiService {
@@ -64,6 +82,9 @@ public class GenAiService {
 	
 	@Autowired
     private ChatModel chatModel;
+	
+	@Autowired
+	private WebClient webClient;
 	
 	GenAiService(RestTemplate restTemplate){
 		this.restTemplate = restTemplate;
@@ -237,4 +258,120 @@ public class GenAiService {
 		
 	}
 	
+//	public String generateImageToText(String prompt, byte[] image) {
+//        String response = ChatClient.create(chatModel).prompt()
+//        					.user(userSpec -> userSpec.text(prompt)
+//                            .media(MimeTypeUtils.IMAGE_JPEG,
+//                                new FileSystemResource("C:\\Workspace\\JavaEEWorkspace\\CustomGenAiGuiService\\src\\main\\resources\\pexels-pixabay-270404.jpg")))
+//        					.call().content();
+//
+//        return null;
+//    }
+
+	public String generateImageToText(String userId, String prompt, MultipartFile file) throws IOException {
+		byte[] image = file.getBytes();
+		File tempFile = File.createTempFile("upload", file.getOriginalFilename());
+	    file.transferTo(tempFile);
+        String response = ChatClient.create(chatModel).prompt()
+							.user(userSpec -> userSpec.text((!StringUtils.isEmpty(prompt))?prompt:Constants.IMAGE_ANALYSIS)
+					        .media(MimeTypeUtils.IMAGE_JPEG, new FileSystemResource(tempFile)))
+							.call().content();
+        if(!StringUtils.isEmpty(response)) {
+        	ImageAnalysisTransaction transaction = new ImageAnalysisTransaction();
+        	transaction.setUserid(userId);
+        	transaction.setQuestion(prompt);
+        	transaction.setImage(image);
+        	transaction.setAnswer(response);
+        	dao.saveImageAnalysisGptTransaction(transaction);
+        }
+		return response;
+	}
+	
+	public Map<String, List<ImageAnalysisTransaction>> getImageAnalysisTransactions(String email, String password){
+		List<ImageAnalysisTransaction> imageTransactions = null;
+		Map<String, List<ImageAnalysisTransaction>> mapByDate = null;
+		User user = dao.getUserObject(email,password);
+		if(null != user) {
+			imageTransactions = dao.getImageAnalysisTransactions(email.split("@")[0]);
+			if(!imageTransactions.isEmpty()) {
+				mapByDate = imageTransactions.stream().collect(Collectors.groupingBy(i -> i.getDateOfChat()));
+			}
+		}
+		return mapByDate;
+	}
+	
+	public Map<String, List<TranslationTransaction>> getTranslationTransaction(String userId) {
+		List<TranslationTransaction> translationTrans = null;
+		Map<String, List<TranslationTransaction>> mapByDate = null;
+		translationTrans = dao.getTranslationTransaction(userId);
+		if(!translationTrans.isEmpty()) {
+			mapByDate = translationTrans.stream().collect(Collectors.groupingBy(i -> i.getDateOfChat()));
+		}
+		return mapByDate;
+	}
+	
+	public Flux<String> chatWithStream(String message) {
+		return ChatClient.create(chatModel).prompt().user(message).stream().content();
+	}
+	
+	public String translate(String text,  String sourceLanguage, String targetLanguage, String userId) {
+		HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", "gpt-3.5-turbo");
+        requestBody.put("messages", Arrays.asList(
+                Map.of("role", "system", "content", "Translate the following text from " + sourceLanguage + " to " + targetLanguage),
+                Map.of("role", "user", "content", text)
+        ));
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+        ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, request, String.class);
+        if (response.getStatusCode() == HttpStatus.OK) {
+        	String resp = response.getBody();
+        	String responseText = getCharResponseAnswer(resp);
+        	TranslationTransaction trans = new TranslationTransaction();
+        	trans.setUserid(userId);
+        	trans.setSourceLang(sourceLanguage);
+        	trans.setQuestion(text);
+        	trans.setTargetLang(targetLanguage);
+        	trans.setAnswer(responseText);
+        	dao.saveTranslaterTransaction(trans);
+            return responseText;
+        } else {
+            throw new RuntimeException("Error calling OpenAI API: " + response.getStatusCode());
+        }
+    }
+	
+	public String extractTextFromFile(MultipartFile file) throws IOException {
+	    if (file.getOriginalFilename().endsWith(".pdf")) {
+	        try (PDDocument document = PDDocument.load(file.getInputStream())) {
+	            return new PDFTextStripper().getText(document);
+	        }
+	    } else if (file.getOriginalFilename().endsWith(".docx")) {
+	        try (XWPFDocument document = new XWPFDocument(file.getInputStream())) {
+	            XWPFWordExtractor extractor = new XWPFWordExtractor(document);
+	            return extractor.getText();
+	        }
+	    } else {
+	        throw new UnsupportedOperationException("File format not supported");
+	    }
+	}
+	
+	public String analyzeResume(String resumeText) {
+	    String prompt = "Analyze this resume: " + resumeText;
+
+	    Map<String, Object> requestBody = Map.of(
+	        "model", "gpt-3.5-turbo",
+	        "messages", List.of(Map.of("role", "user", "content", prompt))
+	    );
+
+	    return webClient.post()
+	        .uri("completions")
+	        .header("Authorization", "Bearer " + apiKey)
+	        .bodyValue(requestBody)
+	        .retrieve()
+	        .bodyToMono(Map.class)
+	        .map(response -> (String) ((Map) response.get("choices")).get("content"))
+	        .block();
+	}
 }
