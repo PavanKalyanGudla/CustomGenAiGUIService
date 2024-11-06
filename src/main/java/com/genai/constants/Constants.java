@@ -18,11 +18,15 @@ public class Constants {
 	
 	public static final String USER_REGISTRATION_SUCCESS = "USER REGISTERED SUCCESSFULLY";
 	
-	public static final String USER_REGISTRATION_FAIL = "User Registeration Failed";
+	public static final String USER_REGISTRATION_FAIL = "USER REGISTRATION FAILED";
 	
-	public static final String USER_EXISTS = "User Already Registered with this Mail Id";
+	public static final String USER_SAVE_SUCCESS = "USER UPDATED SUCCESSFULLY";
 	
-	public static final String USER_NOT_EXISTS = "User Not Yet Registered with the Provided MailId";
+	public static final String USER_SAVE_FAIL = "USER UPDATE FAILED";
+	
+	public static final String USER_EXISTS = "USER ALREADY REGISTERED WITH THIS MAIL-Id";
+	
+	public static final String USER_NOT_EXISTS = "USER NOT YET REGISTERED WITH THE PROVIDED MAIL-ID";
 	
 	public static final String ACCOUNT_DOESNT_EXISTS = "NOT FOUND, PLEASE DO REGISTER AND SIGNIN";
 	
@@ -34,11 +38,13 @@ public class Constants {
 	
 	public static final String CHECK_MAIL = "Password will be notified to Registered Email";
 	
+	public static final String RESUME_ANALYSIS_PROMPT = "Analyze this resume in the field of %s and let me know suggestions %s";
+	
 	public static final String GET_USER_COUNT = "select count(*) from User where userid=?";
 	
 	public static final String GET_USER_PASSWORD = "select password from User where userid=?";
 	
-	public static final String GET_USER_OBJECT = "select * from user where email=? and password=?";
+	public static final String GET_USER_OBJECT = "select * from User where email=? and password=?";
 
 	public static final String GET_USER_CHAT_TRANSACTION = "select * from chatTransaction where userid=?";
 	
@@ -48,8 +54,10 @@ public class Constants {
 	
 	public static final String GET_TRANSLATION_TRANSACTION = "select * from translateTransaction where userid=?";
 	
+	public static final String GET_RESUME_ANALYSIS_TRANSACTION = "select * from resumeAnalysisTransaction where userid=?";
+	
 	// Insert
-	public static final String INSERT_USER = "insert into user(userid,firstName,lastName,email,password,dateOfJoin)"
+	public static final String INSERT_USER = "insert into User(userid,firstName,lastName,email,password,dateOfJoin)"
 			+ "values(?,?,?,?,?,?)";
 	
 	public static final String INSERT_CHAT_TRANSACTION = "insert into chatTransaction(userid,question,answer,dateOfChat)"
@@ -64,8 +72,13 @@ public class Constants {
 	public static final String INSERT_INTO_TRANSLATION_TRANSACTION = "insert into translateTransaction(userid,sourceText,sourceLang,targetText,targetLang,dateOfChat)"
 			+"values(?,?,?,?,?,CURRENT_DATE)";
 	
+	public static final String INSERT_INTO_RESUME_ANALYSIS_TRANS = "insert into resumeAnalysisTransaction(userid,roleType,resumeFile,answer,fileName,dateOfChat)"
+			+"values(?,?,?,?,?,CURRENT_DATE)";
+	
 	//Update
-	public static final String UPLOAD_PROFILE_PIC = "update user set profilePic = ? where userid = ?";
+	public static final String UPLOAD_PROFILE_PIC = "update User set profilePic = ? where userid = ?";
+	
+	public static final String UPDATE_USER_INFO = "update User set firstName=?, lastName=?, password=? where userid = ?";
 
 	public static String getUserRegistrationBody(String firstName, String LastName, String userId, String email, String date) {
 	    String PATIENT_REGISTRATION_CONTENT = String.format(
@@ -114,4 +127,5 @@ public class Constants {
 	            +"Email: info@customGenAi.com",
 				password);
 	}
+	
 }
