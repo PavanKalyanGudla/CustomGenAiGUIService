@@ -10,6 +10,7 @@ import com.genai.constants.Constants;
 import com.genai.model.ChatTransaction;
 import com.genai.model.ImageAnalysisTransaction;
 import com.genai.model.ImageTransaction;
+import com.genai.model.ResumeAnalysisTransaction;
 import com.genai.model.TranslationTransaction;
 import com.genai.model.User;
 import com.genai.rowmapper.ChatTransactionRowMapper;
@@ -17,6 +18,7 @@ import com.genai.rowmapper.ImageTransactionRowMapper;
 import com.genai.rowmapper.ImageAnalysisTransactionRowMapper;
 import com.genai.rowmapper.UserRowMapper;
 import com.genai.rowmapper.TranslationTransactionRowMapper;
+import com.genai.rowmapper.ResumeAnalysisTransactionRowMapper;
 
 @Service
 public class GenAiDao {
@@ -56,6 +58,15 @@ public class GenAiDao {
 		}
 	}
 	
+	public String addUpdateUserInfo(User user) {
+		int update = jdbc.update(Constants.UPDATE_USER_INFO,user.getFirstName(),user.getLastName(),user.getPassword(),user.getUserId());
+		if(update > 0) {
+			return Constants.SUCCESS_MSG;
+		}else {
+			return Constants.FAILURE_MSG;
+		}
+	}
+	
 	public int updateProfilePic(String userId, byte[] image){
 		try {
 			int update = jdbc.update(Constants.UPLOAD_PROFILE_PIC , image , userId);
@@ -66,7 +77,12 @@ public class GenAiDao {
 	}
 	
 	public User getUserObject(String email, String password) {
-		User user = jdbc.queryForObject(Constants.GET_USER_OBJECT, new UserRowMapper(),new Object[] {email,password});
+		User user = null;
+		try {
+			user = jdbc.queryForObject(Constants.GET_USER_OBJECT, new UserRowMapper(),new Object[] {email,password});
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
 		return user;
 	}
 	
@@ -142,5 +158,23 @@ public class GenAiDao {
 		}
 		return translationTrans;
 	}
-
+	
+	public void insertResumeAnalysis(ResumeAnalysisTransaction obj){
+		try {
+			jdbc.update(Constants.INSERT_INTO_RESUME_ANALYSIS_TRANS , obj.getUserid() , obj.getRoleType(),obj.getResumeFile(),obj.getAnswer(),obj.getFileName());
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public List<ResumeAnalysisTransaction> getResumeAnalysisTransactions(String userId) {
+		List<ResumeAnalysisTransaction> trans = null;
+		try {
+			trans = jdbc.query(Constants.GET_RESUME_ANALYSIS_TRANSACTION, new ResumeAnalysisTransactionRowMapper(), new Object[] {userId});
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return trans;
+	}
+	
 }

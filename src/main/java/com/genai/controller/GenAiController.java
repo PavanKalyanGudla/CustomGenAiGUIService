@@ -1,7 +1,6 @@
 package com.genai.controller;
 
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -12,7 +11,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,6 +23,7 @@ import com.genai.model.ChatTransaction;
 import com.genai.model.ImageAnalysisTransaction;
 import com.genai.model.ImageTransaction;
 import com.genai.model.ResponseObj;
+import com.genai.model.ResumeAnalysisTransaction;
 import com.genai.model.TranslationTransaction;
 import com.genai.model.User;
 import com.genai.service.GenAiService;
@@ -46,6 +45,11 @@ public class GenAiController {
 	@PostMapping("/addUser")
 	public String addUserRegistration(@RequestBody User user) {
 		return genService.addUserRegistration(user);
+	}
+	
+	@PostMapping("/updateUser")
+	public ResponseObj updateUserProfile(@RequestBody User user) {
+		return genService.updateUserProfile(user);
 	}
 	
 	@GetMapping("/forgotPassword")
@@ -140,15 +144,19 @@ public class GenAiController {
 	}
 	
 	@PostMapping("/resumeAnalyzer")
-    public ResponseEntity<String> analyzeResume(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<String> analyzeResume(@RequestParam String userId,@RequestParam String role,@RequestParam("file") MultipartFile file) {
         try {
-            String resumeText = genService.extractTextFromFile(file);
-            String analysis = genService.analyzeResume(resumeText);
+            String analysis = genService.analyzeResume(file,role,userId);
             return ResponseEntity.ok(analysis);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to analyze resume");
         }
     }
-
+	
+	@GetMapping("/getResumeAnalysisHistory")
+	public Map<String, List<ResumeAnalysisTransaction>> getResumeAnalysisHistory(String email, String password) {
+		return genService.getResumeAnalysisTransactions(email,password);
+	}
+	
 }

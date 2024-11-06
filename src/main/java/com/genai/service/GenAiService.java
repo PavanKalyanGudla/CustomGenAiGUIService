@@ -53,6 +53,7 @@ import com.genai.model.ChatTransaction;
 import com.genai.model.ImageAnalysisTransaction;
 import com.genai.model.ImageTransaction;
 import com.genai.model.ResponseObj;
+import com.genai.model.ResumeAnalysisTransaction;
 import com.genai.model.TranslationTransaction;
 import com.genai.model.User;
 import com.genai.rowmapper.TranslationTransactionRowMapper;
@@ -98,6 +99,23 @@ public class GenAiService {
 							user.getEmail(), user.getDateOfJoin()));
 		}
 		return response;
+	}
+	
+	public ResponseObj updateUserProfile(User user) {
+		ResponseObj obj = new ResponseObj();
+		String response = dao.addUpdateUserInfo(user);
+		if(response.equals(Constants.SUCCESS_MSG)) {
+			User userObj = dao.getUserObject(user.getEmail(),user.getPassword());
+			obj.setResponseModel(userObj);
+			if(null != userObj) {
+				obj.setResponseCode(Constants.SUCCESS_CODE);
+				obj.setResponseMsg(Constants.USER_SAVE_SUCCESS);
+			}else {
+				obj.setResponseCode(Constants.FAILURE_CODE);
+				obj.setResponseMsg(Constants.USER_SAVE_SUCCESS);
+			}
+		}
+		return obj;
 	}
 	
 	public String forgotPassword(String email){
@@ -257,16 +275,6 @@ public class GenAiService {
 		return imageBytes;
 		
 	}
-	
-//	public String generateImageToText(String prompt, byte[] image) {
-//        String response = ChatClient.create(chatModel).prompt()
-//        					.user(userSpec -> userSpec.text(prompt)
-//                            .media(MimeTypeUtils.IMAGE_JPEG,
-//                                new FileSystemResource("C:\\Workspace\\JavaEEWorkspace\\CustomGenAiGuiService\\src\\main\\resources\\pexels-pixabay-270404.jpg")))
-//        					.call().content();
-//
-//        return null;
-//    }
 
 	public String generateImageToText(String userId, String prompt, MultipartFile file) throws IOException {
 		byte[] image = file.getBytes();
@@ -356,22 +364,51 @@ public class GenAiService {
 	        throw new UnsupportedOperationException("File format not supported");
 	    }
 	}
+
+	public String analyzeResume(MultipartFile file,String role,String userId) throws IOException {
+		String resumeText = extractTextFromFile(file);
+		String prompt = String.format(Constants.RESUME_ANALYSIS_PROMPT, role, resumeText);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", "gpt-4");
+        requestBody.put("messages", List.of(
+            Map.of("role", "user", "content", prompt)
+        ));
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+        ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, request, String.class);
+        if (response.getStatusCode() == HttpStatus.OK) {
+        	String resp = response.getBody();
+        	String responseText = getCharResponseAnswer(resp);
+        	saveResumeAnalysis(userId,role,responseText,file);
+            return responseText;
+        } else {
+            throw new RuntimeException("Error calling OpenAI API: " + response.getStatusCode());
+        }
+    }
 	
-	public String analyzeResume(String resumeText) {
-	    String prompt = "Analyze this resume: " + resumeText;
-
-	    Map<String, Object> requestBody = Map.of(
-	        "model", "gpt-3.5-turbo",
-	        "messages", List.of(Map.of("role", "user", "content", prompt))
-	    );
-
-	    return webClient.post()
-	        .uri("completions")
-	        .header("Authorization", "Bearer " + apiKey)
-	        .bodyValue(requestBody)
-	        .retrieve()
-	        .bodyToMono(Map.class)
-	        .map(response -> (String) ((Map) response.get("choices")).get("content"))
-	        .block();
+	public void saveResumeAnalysis(String userId, String roleType, String responseText, MultipartFile file) throws IOException {
+		ResumeAnalysisTransaction tran = new ResumeAnalysisTransaction();
+		tran.setUserid(userId);
+		tran.setRoleType(roleType);
+		tran.setResumeFile(file.getBytes());
+		tran.setAnswer(responseText);
+		tran.setFileName(file.getOriginalFilename());
+		dao.insertResumeAnalysis(tran);
 	}
+	
+	public Map<String, List<ResumeAnalysisTransaction>> getResumeAnalysisTransactions(String email, String password){
+		List<ResumeAnalysisTransaction> resumeTransactions = null;
+		Map<String, List<ResumeAnalysisTransaction>> mapByDate = null;
+		User user = dao.getUserObject(email,password);
+		if(null != user) {
+			resumeTransactions = dao.getResumeAnalysisTransactions(email.split("@")[0]);
+			if(!resumeTransactions.isEmpty()) {
+				mapByDate = resumeTransactions.stream().collect(Collectors.groupingBy(i -> i.getDateOfChat()));
+			}
+		}
+		return mapByDate;
+	}
+
 }
