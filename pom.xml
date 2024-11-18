@@ -89,7 +89,16 @@
 		    <artifactId>poi-ooxml</artifactId>
 		    <version>5.0.0</version>
 		</dependency>
-		
+		<dependency>
+		    <groupId>com.madgag</groupId>
+		    <artifactId>animated-gif-lib</artifactId>
+		    <version>1.4</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.apache.httpcomponents.client5</groupId>
+		    <artifactId>httpclient5</artifactId>
+		    <version>5.3.1</version>
+		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>

@@ -24,11 +24,8 @@ import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
 import org.springframework.ai.openai.OpenAiImageModel;
 import org.springframework.ai.openai.OpenAiImageOptions;
-import org.springframework.ai.openai.api.OpenAiApi.ChatCompletionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -37,10 +34,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -50,13 +45,14 @@ import com.genai.constants.Constants;
 import com.genai.dao.GenAiDao;
 import com.genai.model.ChatGptRequest;
 import com.genai.model.ChatTransaction;
+import com.genai.model.GifTransaction;
 import com.genai.model.ImageAnalysisTransaction;
 import com.genai.model.ImageTransaction;
+import com.genai.model.PromptRequest;
 import com.genai.model.ResponseObj;
 import com.genai.model.ResumeAnalysisTransaction;
 import com.genai.model.TranslationTransaction;
 import com.genai.model.User;
-import com.genai.rowmapper.TranslationTransactionRowMapper;
 
 import reactor.core.publisher.Flux;
 
@@ -83,9 +79,6 @@ public class GenAiService {
 	
 	@Autowired
     private ChatModel chatModel;
-	
-	@Autowired
-	private WebClient webClient;
 	
 	GenAiService(RestTemplate restTemplate){
 		this.restTemplate = restTemplate;
@@ -410,5 +403,28 @@ public class GenAiService {
 		}
 		return mapByDate;
 	}
-
+	
+	public Map<String, List<GifTransaction>> getGifHistory(String email, String password){
+		List<GifTransaction> gifTransactions = null;
+		Map<String, List<GifTransaction>> mapByDate = null;
+		User user = dao.getUserObject(email,password);
+		if(null != user) {
+			gifTransactions = dao.getGifTransactions(email.split("@")[0]);
+			if(!gifTransactions.isEmpty()) {
+				mapByDate = gifTransactions.stream().collect(Collectors.groupingBy(i -> i.getDateOfChat()));
+			}
+		}
+		return mapByDate;
+	}
+	
+	public String saveGifTransaction(PromptRequest request, byte[] gif){
+		User user = request.getUser();
+    	GifTransaction gifTrans = new GifTransaction();
+    	gifTrans.setUserid(user.getUserId());
+    	gifTrans.setQuestion(request.getPrompt());
+    	gifTrans.setAnswer(gif);
+		int resp = dao.saveGifGptTransaction(gifTrans);
+    	return (resp > 0)?Constants.SUCCESS_MSG:Constants.FAILURE_MSG;
+    }
+	
 }

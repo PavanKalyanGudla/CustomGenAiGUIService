@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.genai.constants.Constants;
 import com.genai.model.ChatTransaction;
+import com.genai.model.GifTransaction;
 import com.genai.model.ImageAnalysisTransaction;
 import com.genai.model.ImageTransaction;
 import com.genai.model.ResumeAnalysisTransaction;
@@ -19,6 +20,7 @@ import com.genai.rowmapper.ImageAnalysisTransactionRowMapper;
 import com.genai.rowmapper.UserRowMapper;
 import com.genai.rowmapper.TranslationTransactionRowMapper;
 import com.genai.rowmapper.ResumeAnalysisTransactionRowMapper;
+import com.genai.rowmapper.GifTransactionRowMapper;
 
 @Service
 public class GenAiDao {
@@ -171,6 +173,25 @@ public class GenAiDao {
 		List<ResumeAnalysisTransaction> trans = null;
 		try {
 			trans = jdbc.query(Constants.GET_RESUME_ANALYSIS_TRANSACTION, new ResumeAnalysisTransactionRowMapper(), new Object[] {userId});
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return trans;
+	}
+	
+	public int saveGifGptTransaction(GifTransaction t) {
+		try {
+			return jdbc.update(Constants.INSERT_GIF_TRANSACTION, t.getUserid(),t.getQuestion(),t.getAnswer());
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return 0;
+	}
+	
+	public List<GifTransaction> getGifTransactions(String userId) {
+		List<GifTransaction> trans = null;
+		try {
+			trans = jdbc.query(Constants.GET_USER_GIF_TRANSACTION, new GifTransactionRowMapper(), new Object[] {userId});
 		}catch(Exception e) {
 			e.printStackTrace();
 		}

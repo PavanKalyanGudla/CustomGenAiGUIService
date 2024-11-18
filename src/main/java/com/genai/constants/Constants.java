@@ -50,6 +50,8 @@ public class Constants {
 	
 	public static final String GET_USER_IMAGE_TRANSACTION = "select * from imageTransaction where userid=?";
 	
+	public static final String GET_USER_GIF_TRANSACTION = "select * from gifTransaction where userid=?";
+	
 	public static final String GET_IMAGE_ANALYSIS_TRANSACTION = "select * from imageAnalysisTransaction where userid=?";
 	
 	public static final String GET_TRANSLATION_TRANSACTION = "select * from translateTransaction where userid=?";
@@ -64,6 +66,9 @@ public class Constants {
 			+ "values(?,?,?,CURRENT_DATE)";
 	
 	public static final String INSERT_IMAGE_TRANSACTION = "insert into imageTransaction(userid,question,answer,dateOfChat)"
+			+ "values(?,?,?,CURRENT_DATE)";
+	
+	public static final String INSERT_GIF_TRANSACTION = "insert into gifTransaction(userid,question,answer,dateOfChat)"
 			+ "values(?,?,?,CURRENT_DATE)";
 	
 	public static final String INSERT_IMAGE_ANALYSIS_TRANSACTION = "insert into imageAnalysisTransaction(userid,question,image,answer,dateOfChat)"

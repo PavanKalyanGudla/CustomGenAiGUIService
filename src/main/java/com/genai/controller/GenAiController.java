@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.genai.constants.Constants;
 import com.genai.model.ChatGptRequest;
 import com.genai.model.ChatTransaction;
+import com.genai.model.GifTransaction;
 import com.genai.model.ImageAnalysisTransaction;
 import com.genai.model.ImageTransaction;
 import com.genai.model.ResponseObj;
@@ -32,6 +34,7 @@ import reactor.core.publisher.Flux;
 
 @RestController
 @CrossOrigin("http://localhost:4200")
+//@CrossOrigin("http://custongenaigui.s3-website.us-east-2.amazonaws.com")
 public class GenAiController {
 	
 	@Autowired
@@ -157,6 +160,11 @@ public class GenAiController {
 	@GetMapping("/getResumeAnalysisHistory")
 	public Map<String, List<ResumeAnalysisTransaction>> getResumeAnalysisHistory(String email, String password) {
 		return genService.getResumeAnalysisTransactions(email,password);
+	}
+	
+	@GetMapping("/getGifChatHistory")
+	public Map<String, List<GifTransaction>> getGifChatHistory(String email, String password){
+		return genService.getGifHistory(email, password);
 	}
 	
 }
